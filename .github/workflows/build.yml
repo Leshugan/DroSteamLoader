@@ -138,21 +138,6 @@ jobs:
           fi
           sed -i 's#<application #<application android:requestLegacyExternalStorage="true" android:usesCleartextTraffic="true" #' "$MAN"
           sed -i 's#<application #<application android:enableOnBackInvokedCallback="false" #' "$MAN"
-          # часть серверов Steam отдаёт файлы по http — разрешаем открытым текстом
-          NSC=android/app/src/main/res/xml/network_security_config.xml
-          mkdir -p android/app/src/main/res/xml
-          printf '%s\n' \
-            '<?xml version="1.0" encoding="utf-8"?>' \
-            '<network-security-config>' \
-            '    <base-config cleartextTrafficPermitted="true">' \
-            '        <trust-anchors>' \
-            '            <certificates src="system" />' \
-            '        </trust-anchors>' \
-            '    </base-config>' \
-            '</network-security-config>' > "$NSC"
-          if ! grep -q "networkSecurityConfig" "$MAN"; then
-            sed -i 's#<application #<application android:networkSecurityConfig="@xml/network_security_config" #' "$MAN"
-          fi
           if ! grep -q "DownloadService" "$MAN"; then
             sed -i 's#</application>#    <service android:name="leshugan.DSL.DownloadService" android:exported="false" android:foregroundServiceType="dataSync" />\n    </application>#' "$MAN"
           fi
@@ -176,6 +161,28 @@ jobs:
 
       - name: Sync Capacitor
         run: npx cap sync android
+
+      - name: Разрешить серверы Steam по открытому протоколу
+        run: |
+          set -e
+          MAN=android/app/src/main/AndroidManifest.xml
+          NSC=android/app/src/main/res/xml/network_security_config.xml
+          mkdir -p android/app/src/main/res/xml
+          printf '%s\n' \
+            '<?xml version="1.0" encoding="utf-8"?>' \
+            '<network-security-config>' \
+            '    <base-config cleartextTrafficPermitted="true">' \
+            '        <trust-anchors>' \
+            '            <certificates src="system" />' \
+            '        </trust-anchors>' \
+            '    </base-config>' \
+            '</network-security-config>' > "$NSC"
+          if ! grep -q "networkSecurityConfig" "$MAN"; then
+            sed -i 's#<application #<application android:networkSecurityConfig="@xml/network_security_config" #' "$MAN"
+          fi
+          echo "----- network_security_config.xml -----"
+          cat "$NSC"
+          grep -E "networkSecurityConfig|usesCleartextTraffic" "$MAN" || true
 
       - name: Build signed release APK
         working-directory: android

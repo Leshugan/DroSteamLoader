@@ -136,7 +136,7 @@ jobs:
           if ! grep -q "FOREGROUND_SERVICE" "$MAN"; then
             sed -i 's#<application#<uses-permission android:name="android.permission.INTERNET" />\n    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />\n    <uses-permission android:name="android.permission.WAKE_LOCK" />\n    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />\n    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />\n    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />\n    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />\n    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />\n    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />\n\n    <application#' "$MAN"
           fi
-          sed -i 's#<application #<application android:requestLegacyExternalStorage="true" android:usesCleartextTraffic="true" #' "$MAN"
+          sed -i 's#<application #<application android:largeHeap="true" android:requestLegacyExternalStorage="true" android:usesCleartextTraffic="true" #' "$MAN"
           sed -i 's#<application #<application android:enableOnBackInvokedCallback="false" #' "$MAN"
           if ! grep -q "DownloadService" "$MAN"; then
             sed -i 's#</application>#    <service android:name="leshugan.DSL.DownloadService" android:exported="false" android:foregroundServiceType="dataSync" />\n    </application>#' "$MAN"

@@ -136,13 +136,24 @@ jobs:
           if ! grep -q "FOREGROUND_SERVICE" "$MAN"; then
             sed -i 's#<application#<uses-permission android:name="android.permission.INTERNET" />\n    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />\n    <uses-permission android:name="android.permission.WAKE_LOCK" />\n    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />\n    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />\n    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />\n    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />\n    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />\n    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />\n\n    <application#' "$MAN"
           fi
-          sed -i 's#<application #<application android:largeHeap="true" android:requestLegacyExternalStorage="true" android:usesCleartextTraffic="true" #' "$MAN"
-          sed -i 's#<application #<application android:enableOnBackInvokedCallback="false" #' "$MAN"
+          # Атрибуты дописываем сразу после имени тега: в манифесте Capacitor
+          # после <application идёт перевод строки, поэтому шаблон "<application " не срабатывал.
+          add_app_attr () {
+            if ! grep -q "$1" "$MAN"; then
+              sed -i "0,/<application/s#<application#<application $2#" "$MAN"
+            fi
+          }
+          add_app_attr "largeHeap" 'android:largeHeap="true"'
+          add_app_attr "requestLegacyExternalStorage" 'android:requestLegacyExternalStorage="true"'
+          add_app_attr "usesCleartextTraffic" 'android:usesCleartextTraffic="true"'
+          add_app_attr "enableOnBackInvokedCallback" 'android:enableOnBackInvokedCallback="false"'
           if ! grep -q "DownloadService" "$MAN"; then
             sed -i 's#</application>#    <service android:name="leshugan.DSL.DownloadService" android:exported="false" android:foregroundServiceType="dataSync" />\n    </application>#' "$MAN"
           fi
           echo "----- manifest -----"
-          grep -E "uses-permission|DownloadService|usesCleartext" "$MAN" || true
+          grep -E "uses-permission|DownloadService|usesCleartext|largeHeap" "$MAN" || true
+          # если увеличенная память не прописалась — останавливаем сборку, иначе снова словим вылет
+          grep -q 'android:largeHeap="true"' "$MAN" || { echo "largeHeap НЕ прописан в манифест"; exit 1; }
 
       - name: Положить наш нативный код
         run: |

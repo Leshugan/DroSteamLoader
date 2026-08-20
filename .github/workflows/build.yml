@@ -237,15 +237,25 @@ jobs:
     permissions:
       actions: write
     steps:
-      - name: Delete old runs and APKs (keep last 10 successful)
+      - name: Чистка старых запусков (10 успешных + 1 последний неуспешный)
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
         run: |
           WF=build.yml
+
           echo "Оставляем 10 последних успешных запусков:"
-          KEEP=$(gh run list --repo "$REPO" --workflow "$WF" --status success --limit 10 --json databaseId --jq '.[].databaseId')
-          echo "$KEEP"
+          KEEP_OK=$(gh run list --repo "$REPO" --workflow "$WF" --status success --limit 10 --json databaseId --jq '.[].databaseId')
+          echo "$KEEP_OK"
+
+          echo "Оставляем последний неуспешный запуск:"
+          KEEP_BAD=$(gh run list --repo "$REPO" --workflow "$WF" --limit 100 \
+            --json databaseId,conclusion \
+            --jq '[.[] | select(.conclusion != null and .conclusion != "success")] | .[0].databaseId // empty')
+          echo "${KEEP_BAD:-нет}"
+
+          KEEP=$(printf '%s\n%s\n' "$KEEP_OK" "$KEEP_BAD" | grep -v '^$' || true)
+
           echo "Удаляем остальные запуски и их APK:"
           gh run list --repo "$REPO" --workflow "$WF" --limit 300 --json databaseId --jq '.[].databaseId' | while read -r id; do
             [ "$id" = "$GITHUB_RUN_ID" ] && continue

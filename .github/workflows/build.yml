@@ -167,6 +167,12 @@ jobs:
           cp -r native/kotlin/in android/app/src/main/kotlin/
           mkdir -p android/app/src/main/assets
           cp native/kotlin/LICENSE_JavaSteam.txt android/app/src/main/assets/LICENSE_JavaSteam.txt
+          # своя разметка уведомления (кнопки справа); если папки нет — просто пропускаем
+          if [ -d native/res ]; then
+            mkdir -p android/app/src/main/res
+            cp -r native/res/* android/app/src/main/res/
+            echo "res:" && ls -la android/app/src/main/res/layout 2>/dev/null | head
+          fi
           echo "java:" && ls -la "$PKG"
           echo "kotlin:" && find android/app/src/main/kotlin -name "*.kt" | wc -l
 

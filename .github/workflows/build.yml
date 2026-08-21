@@ -150,6 +150,10 @@ jobs:
           if ! grep -q "DownloadService" "$MAN"; then
             sed -i 's#</application>#    <service android:name="leshugan.DSL.DownloadService" android:exported="false" android:foregroundServiceType="dataSync" />\n    </application>#' "$MAN"
           fi
+          # кнопки уведомления должны работать и когда служба остановлена (пауза)
+          if ! grep -q "NotifActions" "$MAN"; then
+            sed -i 's#</application>#    <receiver android:name="leshugan.DSL.NotifActions" android:exported="false">\n      <intent-filter>\n        <action android:name="leshugan.DSL.PAUSE" />\n        <action android:name="leshugan.DSL.RESUME" />\n        <action android:name="leshugan.DSL.CANCEL" />\n        <action android:name="leshugan.DSL.CLOSE" />\n      </intent-filter>\n    </receiver>\n    </application>#' "$MAN"
+          fi
           echo "----- manifest -----"
           grep -E "uses-permission|DownloadService|usesCleartext|largeHeap" "$MAN" || true
           # если увеличенная память не прописалась — останавливаем сборку, иначе снова словим вылет

@@ -234,14 +234,16 @@ jobs:
           VER=$(node -p "require('./package.json').version")
           APK=$(ls android/app/build/outputs/apk/release/*.apk | head -1)
           TAG="v$VER"
+          # Описание релиза короткое: чейнджлог живёт в переписке, а не здесь
+          NOTES="Версия $VER · сборка #${{ github.run_number }} от $(date -u +'%Y-%m-%d %H:%M UTC')"
           echo "Публикую релиз $TAG из $APK"
           if gh release view "$TAG" --repo "$REPO" >/dev/null 2>&1; then
             gh release edit "$TAG" --repo "$REPO" \
-              --title "DroSteamLoader $VER" --notes-file RELEASE.md
+              --title "DroSteamLoader $VER" --notes "$NOTES"
             gh release upload "$TAG" "$APK" --repo "$REPO" --clobber
           else
             gh release create "$TAG" --repo "$REPO" \
-              --title "DroSteamLoader $VER" --notes-file RELEASE.md "$APK"
+              --title "DroSteamLoader $VER" --notes "$NOTES" "$APK"
           fi
           echo "Готово: $TAG"
 

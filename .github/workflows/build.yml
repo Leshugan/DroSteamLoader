@@ -224,6 +224,27 @@ jobs:
           mv "$SRC" "$DIR/DroSteamLoader $VER.apk"
           ls -la "$DIR"
 
+      - name: Выложить релиз (если в архиве есть RELEASE.md)
+        if: hashFiles('RELEASE.md') != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -e
+          VER=$(node -p "require('./package.json').version")
+          APK=$(ls android/app/build/outputs/apk/release/*.apk | head -1)
+          TAG="v$VER"
+          echo "Публикую релиз $TAG из $APK"
+          if gh release view "$TAG" --repo "$REPO" >/dev/null 2>&1; then
+            gh release edit "$TAG" --repo "$REPO" \
+              --title "DroSteamLoader $VER" --notes-file RELEASE.md
+            gh release upload "$TAG" "$APK" --repo "$REPO" --clobber
+          else
+            gh release create "$TAG" --repo "$REPO" \
+              --title "DroSteamLoader $VER" --notes-file RELEASE.md "$APK"
+          fi
+          echo "Готово: $TAG"
+
       - name: Upload APK (артефакт)
         id: upload_artifact
         continue-on-error: true
